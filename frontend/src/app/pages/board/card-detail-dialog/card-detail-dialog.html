@@ -1,0 +1,344 @@
+<app-modal size="lg" [open]="open()" (close)="close.emit()">
+  @if (loading()) {
+    <div class="flex justify-center py-16 text-fog">
+      <app-spinner [size]="22" label="Cargando tarjeta" />
+    </div>
+  } @else if (card(); as detail) {
+    <div class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <!-- ───────────── Columna principal ───────────── -->
+      <div class="min-w-0 space-y-6">
+        <!-- Título -->
+        <div>
+          <textarea
+            rows="1"
+            class="w-full resize-none rounded-md bg-transparent px-2 py-1 text-lg font-medium text-paper
+                   ring-1 ring-transparent transition-shadow hover:ring-graphite focus:bg-obsidian
+                   focus:outline-none focus:ring-iris-500"
+            [value]="detail.title"
+            (blur)="saveTitle($event)"
+            (keydown.enter)="saveTitle($event)"
+            aria-label="Título de la tarjeta"
+          ></textarea>
+          <p class="mt-1 px-2 text-xs text-ash">
+            en <span class="text-fog">{{ detail.listName }}</span>
+            @if (detail.createdBy) {
+              · creada por {{ detail.createdBy.displayName }}
+            }
+          </p>
+        </div>
+
+        <!-- Descripción -->
+        <section>
+          <h3 class="mb-2 flex items-center gap-2 text-sm font-medium text-mist">
+            <app-icon name="list-bullet" [size]="15" class="text-ash" />
+            Descripción
+          </h3>
+          <textarea
+            #descriptionInput
+            rows="4"
+            class="w-full resize-y rounded-md bg-obsidian p-3 text-sm leading-relaxed text-mist ring-1
+                   ring-graphite placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-iris-500"
+            placeholder="Añade contexto: el qué, el porqué y cómo se sabe que está hecho."
+            [value]="detail.description ?? ''"
+            (input)="descriptionDirty.set(true)"
+          ></textarea>
+          @if (descriptionDirty()) {
+            <div class="mt-2 flex gap-2">
+              <button type="button" appBtn="primary" size="sm" (click)="saveDescription()">
+                Guardar
+              </button>
+              <button type="button" appBtn="ghost" size="sm" (click)="resetDescription()">
+                Descartar
+              </button>
+            </div>
+          }
+        </section>
+
+        <!-- Checklist -->
+        <section>
+          <div class="mb-2 flex items-center justify-between">
+            <h3 class="flex items-center gap-2 text-sm font-medium text-mist">
+              <app-icon name="check-circle" [size]="15" class="text-ash" />
+              Subtareas
+              @if (detail.checklistTotal > 0) {
+                <span class="text-xs text-ash">
+                  {{ detail.checklistDone }}/{{ detail.checklistTotal }}
+                </span>
+              }
+            </h3>
+          </div>
+
+          @if (detail.checklistTotal > 0) {
+            <app-progress-bar
+              class="mb-3 block"
+              [done]="detail.checklistDone"
+              [total]="detail.checklistTotal"
+            />
+          }
+
+          <ul class="space-y-1">
+            @for (item of detail.checklistItems; track item.id) {
+              <li class="group/item flex items-start gap-2.5 rounded-md px-1 py-1.5 hover:bg-obsidian/60">
+                <app-check-box
+                  class="mt-0.5"
+                  [checked]="item.isCompleted"
+                  [label]="item.text"
+                  (toggled)="toggleChecklistItem(item, $event)"
+                />
+                <span
+                  class="min-w-0 flex-1 text-sm leading-snug"
+                  [class]="item.isCompleted ? 'text-ash line-through' : 'text-mist'"
+                >
+                  {{ item.text }}
+                </span>
+                <button
+                  type="button"
+                  class="rounded p-1 text-ash opacity-0 transition-opacity hover:text-rose-300
+                         focus-visible:opacity-100 group-hover/item:opacity-100"
+                  [attr.aria-label]="'Eliminar ' + item.text"
+                  (click)="removeChecklistItem(item.id)"
+                >
+                  <app-icon name="x-mark" [size]="14" />
+                </button>
+              </li>
+            }
+          </ul>
+
+          <div class="mt-2 flex gap-2">
+            <input
+              #checklistInput
+              type="text"
+              class="h-9 flex-1 rounded-md bg-obsidian px-3 text-sm text-paper ring-1 ring-graphite
+                     placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-iris-500"
+              placeholder="Añadir subtarea…"
+              (keydown.enter)="addChecklistItem()"
+            />
+            <button type="button" appBtn="subtle" size="md" (click)="addChecklistItem()">
+              <app-icon name="plus" [size]="15" />
+            </button>
+          </div>
+        </section>
+
+        <!-- Comentarios -->
+        <section>
+          <h3 class="mb-3 flex items-center gap-2 text-sm font-medium text-mist">
+            <app-icon name="chat-bubble-left-ellipsis" [size]="15" class="text-ash" />
+            Comentarios
+            @if (detail.comments.length > 0) {
+              <span class="text-xs text-ash">{{ detail.comments.length }}</span>
+            }
+          </h3>
+
+          <div class="flex gap-2.5">
+            @if (currentUser(); as me) {
+              <app-avatar
+                size="sm"
+                class="mt-1"
+                [displayName]="me.displayName"
+                [initials]="me.initials"
+                [color]="me.avatarColor"
+              />
+            }
+            <div class="min-w-0 flex-1">
+              <textarea
+                #commentInput
+                rows="2"
+                class="w-full resize-none rounded-md bg-obsidian p-2.5 text-sm text-paper ring-1
+                       ring-graphite placeholder:text-ash focus:outline-none focus:ring-2
+                       focus:ring-iris-500"
+                placeholder="Escribe un comentario…"
+                (input)="onCommentInput($event)"
+              ></textarea>
+              @if (commentDirty()) {
+                <button type="button" appBtn="primary" size="sm" class="mt-2" (click)="addComment()">
+                  <app-icon name="paper-airplane" [size]="14" />
+                  Comentar
+                </button>
+              }
+            </div>
+          </div>
+
+          <ul class="mt-5 space-y-4">
+            @for (comment of detail.comments; track comment.id) {
+              <li class="flex gap-2.5">
+                <app-avatar
+                  size="sm"
+                  class="mt-0.5"
+                  [displayName]="comment.author.displayName"
+                  [initials]="comment.author.initials"
+                  [color]="comment.author.avatarColor"
+                />
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-sm text-paper">{{ comment.author.displayName }}</span>
+                    <span class="text-xs text-ash">{{ time(comment.createdAt) }}</span>
+                    @if (comment.updatedAt) {
+                      <span class="text-xs text-ash">· editado</span>
+                    }
+                  </div>
+
+                  @if (editingCommentId() === comment.id) {
+                    <textarea
+                      #editCommentInput
+                      rows="2"
+                      class="mt-1.5 w-full resize-none rounded-md bg-obsidian p-2.5 text-sm text-paper
+                             ring-1 ring-iris-500 focus:outline-none"
+                      [value]="comment.text"
+                    ></textarea>
+                    <div class="mt-1.5 flex gap-2">
+                      <button type="button" appBtn="primary" size="sm" (click)="saveComment(comment.id)">
+                        Guardar
+                      </button>
+                      <button type="button" appBtn="ghost" size="sm" (click)="editingCommentId.set(null)">
+                        Cancelar
+                      </button>
+                    </div>
+                  } @else {
+                    <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-mist">
+                      {{ comment.text }}
+                    </p>
+
+                    @if (canEditComment(comment)) {
+                      <div class="mt-1 flex gap-3">
+                        <button
+                          type="button"
+                          class="text-xs text-ash transition-colors hover:text-mist"
+                          (click)="startEditComment(comment.id)"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          class="text-xs text-ash transition-colors hover:text-rose-300"
+                          (click)="removeComment(comment.id)"
+                        >
+                          Borrar
+                        </button>
+                      </div>
+                    }
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <!-- ───────────── Barra lateral ───────────── -->
+      <aside class="space-y-5">
+        <!-- Responsables -->
+        <section>
+          <h3 class="mb-2 text-xs uppercase tracking-wider text-ash">Responsables</h3>
+          <div class="flex flex-wrap gap-1.5">
+            @for (member of members(); track member.userId) {
+              <button
+                type="button"
+                class="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 text-xs transition-colors
+                       ring-1"
+                [class]="
+                  isAssigned(member.userId)
+                    ? 'bg-iris-500/15 text-iris-200 ring-iris-400/30'
+                    : 'bg-obsidian text-fog ring-graphite hover:text-paper'
+                "
+                [attr.aria-pressed]="isAssigned(member.userId)"
+                (click)="toggleAssignee(member.userId)"
+              >
+                <app-avatar
+                  size="xs"
+                  [displayName]="member.displayName"
+                  [initials]="member.initials"
+                  [color]="member.avatarColor"
+                />
+                {{ member.displayName }}
+              </button>
+            }
+          </div>
+        </section>
+
+        <!-- Etiquetas -->
+        <section>
+          <h3 class="mb-2 text-xs uppercase tracking-wider text-ash">Etiquetas</h3>
+          <div class="flex flex-wrap gap-1.5">
+            @for (label of labels(); track label.id) {
+              <button
+                type="button"
+                class="rounded-full transition-opacity"
+                [class.opacity-40]="!hasLabel(label.id)"
+                [attr.aria-pressed]="hasLabel(label.id)"
+                (click)="toggleLabel(label.id)"
+              >
+                <app-label-chip [label]="label" />
+              </button>
+            } @empty {
+              <p class="text-xs text-ash">Este tablero no tiene etiquetas todavía.</p>
+            }
+          </div>
+        </section>
+
+        <!-- Fecha límite -->
+        <section>
+          <h3 class="mb-2 text-xs uppercase tracking-wider text-ash">Fecha límite</h3>
+          <input
+            #dueInput
+            type="datetime-local"
+            class="h-9 w-full rounded-md bg-obsidian px-3 text-sm text-paper ring-1 ring-graphite
+                   focus:outline-none focus:ring-2 focus:ring-iris-500"
+            [value]="dueValue()"
+            (change)="saveDueDate()"
+            aria-label="Fecha límite"
+          />
+
+          @if (detail.dueDate) {
+            <label class="mt-2 flex cursor-pointer items-center gap-2.5">
+              <app-check-box
+                label="Marcar como cumplida"
+                [checked]="detail.isCompleted"
+                (toggled)="toggleCompleted($event)"
+              />
+              <span class="text-sm text-fog">Cumplida</span>
+            </label>
+          }
+        </section>
+
+        <!-- Portada -->
+        <section>
+          <h3 class="mb-2 text-xs uppercase tracking-wider text-ash">Franja de color</h3>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              class="h-6 w-6 rounded-md bg-obsidian text-ash ring-1 ring-graphite transition-colors
+                     hover:text-paper"
+              aria-label="Sin franja"
+              (click)="setCover(null)"
+            >
+              <app-icon name="x-mark" [size]="12" class="mx-auto" />
+            </button>
+            @for (color of coverColors; track color) {
+              <button
+                type="button"
+                class="h-6 w-6 rounded-md transition-transform hover:scale-110"
+                [class]="coverClass(color)"
+                [class.ring-2]="detail.coverColor === color"
+                [class.ring-white]="detail.coverColor === color"
+                [attr.aria-label]="'Franja ' + color"
+                (click)="setCover(color)"
+              ></button>
+            }
+          </div>
+        </section>
+
+        <!-- Acciones -->
+        <section class="space-y-2 border-t border-graphite pt-4">
+          <button type="button" appBtn="subtle" class="w-full" (click)="archive()">
+            <app-icon name="archive-box" [size]="15" />
+            Archivar tarjeta
+          </button>
+          <button type="button" appBtn="danger" class="w-full" (click)="remove()">
+            <app-icon name="trash" [size]="15" />
+            Eliminar
+          </button>
+        </section>
+      </aside>
+    </div>
+  }
+</app-modal>

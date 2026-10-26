@@ -1,0 +1,237 @@
+@if (store.loading()) {
+  <div class="flex h-[calc(100dvh-3.5rem)] items-center justify-center text-fog">
+    <app-spinner [size]="26" label="Cargando tablero" />
+  </div>
+} @else if (store.notFound()) {
+  <app-empty-state
+    icon="lock-closed"
+    title="No tienes acceso a este tablero"
+    description="Puede que te hayan quitado del espacio o que el enlace ya no exista."
+  >
+    <a routerLink="/app" appBtn="subtle">Volver al inicio</a>
+  </app-empty-state>
+} @else if (store.board(); as board) {
+  <div class="flex h-[calc(100dvh-3.5rem)] flex-col" [class]="surfaceClass()">
+    <!-- ───────────────────────── Barra del tablero ───────────────────────── -->
+    <header class="flex flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
+      <div class="flex min-w-0 items-center gap-2">
+        <a
+          [routerLink]="['/app/w', board.workspaceId]"
+          class="hidden shrink-0 text-sm text-white/55 transition-colors hover:text-white sm:block"
+        >
+          {{ board.workspaceName }}
+        </a>
+        <span class="hidden text-white/25 sm:block">/</span>
+        <h1 class="truncate text-base font-medium text-white">{{ board.name }}</h1>
+      </div>
+
+      <!-- Presencia: quién tiene el tablero abierto ahora mismo. -->
+      @if (store.viewers().length > 0) {
+        <div class="ml-1 flex items-center gap-2">
+          <app-avatar-stack [users]="store.viewers()" [max]="4" size="sm" />
+          <span class="hidden items-center gap-1.5 text-xs text-white/50 md:flex">
+            <span class="h-1.5 w-1.5 rounded-full bg-signal-success"></span>
+            {{ presenceLabel() }}
+          </span>
+        </div>
+      }
+
+      <div class="ml-auto flex items-center gap-2">
+        @if (store.filtersActive()) {
+          <span class="hidden text-xs text-white/55 sm:block">
+            {{ store.visibleCardCount() }} de {{ store.totalCardCount() }}
+          </span>
+        }
+
+        <app-board-filters
+          [labels]="store.labels()"
+          [members]="store.members()"
+          [filters]="store.filters()"
+          (filtersChange)="store.setFilters($event)"
+        />
+
+        <button type="button" appBtn="subtle" size="sm" (click)="showActivity.set(true)">
+          <app-icon name="bolt" [size]="15" />
+          <span class="hidden sm:inline">Actividad</span>
+        </button>
+
+        @if (store.canManage()) {
+          <button
+            type="button"
+            appBtn="icon"
+            size="sm"
+            aria-label="Ajustes del tablero"
+            (click)="openSettings()"
+          >
+            <app-icon name="cog-6-tooth" [size]="17" />
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (store.filtersActive()) {
+      <p class="px-4 pb-2 text-xs text-white/50">
+        Con filtros activos no se pueden arrastrar tarjetas: los huecos que ves no son los de
+        la lista completa.
+      </p>
+    }
+
+    <!-- ───────────────────────── Columnas ───────────────────────── -->
+    <div
+      class="scrollbar-slim flex flex-1 gap-3 overflow-x-auto px-4 pb-4"
+      cdkDropList
+      cdkDropListOrientation="horizontal"
+      [cdkDropListData]="store.lists()"
+      (cdkDropListDropped)="dropList($event)"
+    >
+      @for (list of store.visibleLists(); track list.id) {
+        <app-board-column
+          cdkDrag
+          [cdkDragDisabled]="!store.canManage() || store.filtersActive()"
+          [list]="list"
+          [canManage]="store.canManage()"
+          [connectedTo]="store.dropListIds()"
+          [filtered]="store.filtersActive()"
+          (cardDropped)="dropCard($event)"
+          (cardOpened)="openCard($event)"
+          (cardCreated)="store.createCard($event.listId, $event.title)"
+          (renamed)="store.renameList($event.listId, $event.name)"
+          (archived)="archiveList($event)"
+          (deleted)="deleteList($event)"
+        >
+          <div
+            *cdkDragPlaceholder
+            class="h-full w-72 shrink-0 rounded-xl border border-dashed border-white/20 bg-white/5"
+          ></div>
+        </app-board-column>
+      }
+
+      <!-- Añadir lista -->
+      <div class="w-72 shrink-0">
+        @if (addingList()) {
+          <div class="rounded-xl bg-carbon/85 p-2.5 ring-1 ring-graphite backdrop-blur-sm">
+            <input
+              #newListInput
+              type="text"
+              class="h-9 w-full rounded-md bg-obsidian px-3 text-sm text-paper ring-1 ring-iris-500
+                     placeholder:text-ash focus:outline-none"
+              placeholder="Nombre de la lista…"
+              (keydown.enter)="submitList()"
+              (keydown.escape)="addingList.set(false)"
+            />
+            <div class="mt-2 flex gap-2">
+              <button type="button" appBtn="primary" size="sm" (click)="submitList()">Añadir</button>
+              <button type="button" appBtn="ghost" size="sm" (click)="addingList.set(false)">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        } @else if (store.canManage()) {
+          <button
+            type="button"
+            class="flex h-11 w-full items-center gap-2 rounded-xl bg-white/5 px-3 text-sm text-white/60
+                   ring-1 ring-white/10 backdrop-blur-sm transition-colors hover:bg-white/10
+                   hover:text-white"
+            (click)="startAddingList()"
+          >
+            <app-icon name="plus" [size]="16" />
+            Añadir lista
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────────────────────── Ajustes del tablero ───────────────────────── -->
+  <app-modal
+    size="sm"
+    title="Ajustes del tablero"
+    [open]="showSettings()"
+    (close)="showSettings.set(false)"
+  >
+    <form class="space-y-4" [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+      <div>
+        <label class="mb-1.5 block text-sm text-fog" for="board-name">Nombre</label>
+        <input
+          id="board-name"
+          type="text"
+          formControlName="name"
+          class="h-10 w-full rounded-md bg-obsidian px-3 text-sm text-paper ring-1 ring-graphite
+                 focus:outline-none focus:ring-2 focus:ring-iris-500"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm text-fog" for="board-description">Descripción</label>
+        <textarea
+          id="board-description"
+          rows="2"
+          formControlName="description"
+          class="w-full resize-none rounded-md bg-obsidian px-3 py-2 text-sm text-paper ring-1
+                 ring-graphite focus:outline-none focus:ring-2 focus:ring-iris-500"
+        ></textarea>
+      </div>
+
+      <div>
+        <span class="mb-2 block text-sm text-fog">Fondo</span>
+        <div class="grid grid-cols-6 gap-2">
+          @for (option of backgrounds; track option) {
+            <button
+              type="button"
+              class="relative h-12 overflow-hidden rounded-md ring-1 transition-all"
+              [class]="thumbClass(option)"
+              [class.ring-iris-400]="background() === option"
+              [class.ring-graphite]="background() !== option"
+              [attr.aria-label]="'Fondo ' + backgroundLabel(option)"
+              [attr.aria-pressed]="background() === option"
+              (click)="background.set(option)"
+            >
+              @if (background() === option) {
+                <span class="absolute inset-0 flex items-center justify-center bg-void/30 text-white">
+                  <app-icon name="check" [size]="15" [strokeWidth]="2" />
+                </span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" appBtn="ghost" (click)="showSettings.set(false)">Cancelar</button>
+        <button type="submit" appBtn="primary" [disabled]="settingsForm.invalid">Guardar</button>
+      </div>
+    </form>
+
+    <div class="mt-6 border-t border-graphite pt-4">
+      <p class="mb-3 text-xs leading-relaxed text-ash">
+        Archivar lo saca de la lista de tableros sin borrar nada. Eliminar borra sus listas,
+        tarjetas y comentarios.
+      </p>
+      <div class="flex gap-2">
+        <button type="button" appBtn="subtle" size="sm" (click)="archiveBoard()">
+          <app-icon name="archive-box" [size]="15" />
+          Archivar
+        </button>
+        <button type="button" appBtn="danger" size="sm" (click)="deleteBoard()">
+          <app-icon name="trash" [size]="15" />
+          Eliminar tablero
+        </button>
+      </div>
+    </div>
+  </app-modal>
+
+  <app-activity-panel
+    [open]="showActivity()"
+    [entries]="store.activity()"
+    (close)="showActivity.set(false)"
+  />
+
+  <app-card-detail-dialog
+    [cardId]="openCardId()"
+    [labels]="store.labels()"
+    [members]="store.members()"
+    (close)="closeCard()"
+    (cardChanged)="store.applyCard($event)"
+    (cardRemoved)="onCardRemoved($event)"
+  />
+}

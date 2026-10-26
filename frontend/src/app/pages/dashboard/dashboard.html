@@ -1,0 +1,208 @@
+<div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+  @if (loading()) {
+    <div class="flex justify-center py-24 text-fog">
+      <app-spinner [size]="24" label="Cargando tu panel" />
+    </div>
+  } @else if (data(); as dashboard) {
+    <!-- ── Cabecera ── -->
+    <header class="mb-8">
+      <h1 class="text-2xl font-medium sm:text-3xl">{{ greeting() }}</h1>
+      <p class="mt-1.5 text-sm text-fog">{{ summary() }}</p>
+    </header>
+
+    <!-- ── Métricas ── -->
+    <div class="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (stat of stats(); track stat.label) {
+        <div class="rounded-lg bg-carbon p-4 ring-1 ring-graphite">
+          <p class="text-xs text-ash">{{ stat.label }}</p>
+          <p class="mt-1.5 text-2xl font-medium" [class]="stat.tone">{{ stat.value }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- ── Invitaciones pendientes ── -->
+    @if (dashboard.pendingInvitations.length > 0) {
+      <section class="mb-10">
+        <h2 class="mb-3 text-sm font-medium text-mist">Te están esperando</h2>
+        <ul class="space-y-2">
+          @for (invitation of dashboard.pendingInvitations; track invitation.id) {
+            <li
+              class="flex flex-wrap items-center gap-3 rounded-lg bg-carbon p-4 ring-1 ring-iris-500/20"
+            >
+              <span class="h-2.5 w-2.5 rounded-full" [class]="dotClass(invitation.workspaceColor)"></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-mist">
+                  <span class="text-paper">{{ invitation.invitedByName }}</span>
+                  te invitó a
+                  <span class="text-paper">{{ invitation.workspaceName }}</span>
+                  como {{ invitation.role }}
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" appBtn="primary" size="sm" (click)="accept(invitation)">
+                  Aceptar
+                </button>
+                <button type="button" appBtn="ghost" size="sm" (click)="decline(invitation)">
+                  Rechazar
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- ── Vistos recientemente ── -->
+    @if (dashboard.recentBoards.length > 0) {
+      <section class="mb-10">
+        <h2 class="mb-3 text-sm font-medium text-mist">Vistos recientemente</h2>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          @for (board of dashboard.recentBoards; track board.id) {
+            <a
+              [routerLink]="['/app/b', board.id]"
+              class="group/board relative overflow-hidden rounded-lg p-4 ring-1 ring-graphite
+                     transition-all duration-200 hover:-translate-y-0.5 hover:ring-smoke"
+              [class]="thumbClass(board.background)"
+            >
+              <p class="truncate text-sm font-medium text-paper">{{ board.name }}</p>
+              <p class="mt-0.5 truncate text-xs text-white/55">{{ board.workspaceName }}</p>
+              <div class="mt-6 flex items-center gap-3 text-[11px] text-white/60">
+                <span class="flex items-center gap-1">
+                  <app-icon name="view-columns" [size]="12" />
+                  {{ board.listCount }}
+                </span>
+                <span class="flex items-center gap-1">
+                  <app-icon name="rectangle-stack" [size]="12" />
+                  {{ board.cardCount }}
+                </span>
+                <span
+                  class="ml-auto translate-x-1 opacity-0 transition-all duration-200
+                         group-hover/board:translate-x-0 group-hover/board:opacity-100"
+                >
+                  <app-icon name="arrow-right" [size]="14" />
+                </span>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    <div class="grid gap-10 lg:grid-cols-[1.15fr_1fr]">
+      <!-- ── Espacios ── -->
+      <section>
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-medium text-mist">Tus espacios</h2>
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-xs text-fog transition-colors hover:text-paper"
+            (click)="showWorkspaceDialog.set(true)"
+          >
+            <app-icon name="plus" [size]="13" />
+            Nuevo
+          </button>
+        </div>
+
+        @if (dashboard.workspaces.length === 0) {
+          <div class="rounded-lg bg-carbon ring-1 ring-graphite">
+            <app-empty-state
+              icon="user-group"
+              title="Todavía no tienes espacios"
+              description="Un espacio agrupa los tableros de un equipo y su gente."
+            >
+              <button type="button" appBtn="primary" (click)="showWorkspaceDialog.set(true)">
+                <app-icon name="plus" [size]="15" />
+                Crear espacio
+              </button>
+            </app-empty-state>
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (workspace of dashboard.workspaces; track workspace.id) {
+              <li>
+                <a
+                  [routerLink]="['/app/w', workspace.id]"
+                  class="flex items-center gap-3 rounded-lg bg-carbon p-4 ring-1 ring-graphite
+                         transition-colors hover:ring-smoke"
+                >
+                  <span class="h-2.5 w-2.5 shrink-0 rounded-full" [class]="dotClass(workspace.color)"></span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm text-paper">{{ workspace.name }}</p>
+                    <p class="truncate text-xs text-ash">
+                      {{ workspace.boardCount }} tableros · {{ workspace.memberCount }} miembros
+                    </p>
+                  </div>
+                  <span
+                    class="shrink-0 rounded-full bg-obsidian px-2.5 py-1 text-[11px] text-fog
+                           ring-1 ring-graphite"
+                  >
+                    {{ workspace.myRole }}
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- ── Mis tarjetas ── -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium text-mist">Asignadas a ti</h2>
+
+        @if (dashboard.myCards.length === 0) {
+          <div class="rounded-lg bg-carbon ring-1 ring-graphite">
+            <app-empty-state
+              icon="check-circle"
+              title="Nada pendiente"
+              description="Cuando te asignen una tarjeta, aparecerá aquí ordenada por fecha límite."
+            />
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (card of dashboard.myCards; track card.id) {
+              <li>
+                <a
+                  [routerLink]="['/app/b', card.boardId]"
+                  [queryParams]="{ card: card.id }"
+                  class="block rounded-lg bg-carbon p-3.5 ring-1 ring-graphite transition-colors
+                         hover:ring-smoke"
+                >
+                  <div class="flex items-start gap-3">
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm text-paper">{{ card.title }}</p>
+                      <p class="mt-0.5 truncate text-xs text-ash">
+                        {{ card.boardName }} · {{ card.listName }}
+                      </p>
+                    </div>
+                    @if (card.dueDate) {
+                      <span
+                        class="shrink-0 rounded-full px-2 py-0.5 text-[11px] ring-1"
+                        [class]="dueClass(card.dueDate, card.isCompleted)"
+                      >
+                        {{ dueLabel(card.dueDate) }}
+                      </span>
+                    }
+                  </div>
+
+                  @if (card.labels.length > 0) {
+                    <div class="mt-2.5 flex flex-wrap gap-1.5">
+                      @for (label of card.labels; track label.id) {
+                        <app-label-chip [label]="label" />
+                      }
+                    </div>
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>
+
+<app-create-workspace-dialog
+  [open]="showWorkspaceDialog()"
+  (close)="showWorkspaceDialog.set(false)"
+  (created)="onWorkspaceCreated($event)"
+/>

@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+/*
+  Sistema de diseño de Kairo.
+
+  Punto de partida: el DESIGN.md de Linear (styles.refero.design) — superficies casi negras
+  en escala void → carbon → obsidian, bordes hairline en vez de sombras, pesos tipográficos
+  bajos (nada de 700+), tracking cerrado y la escalera de espaciado 8/12/24/96.
+
+  Lo que cambia respecto a Linear: el acento. El suyo es un lima ácido; aquí es un iris
+  eléctrico, y por una razón concreta: en un gestor de tareas el ámbar y el rojo ya significan
+  "vence pronto" y "vencido", así que el color de acción tenía que quedarse fuera de esa
+  conversación semántica.
+*/
+
+@theme {
+  /* Superficies */
+  --color-void: #08090a;
+  --color-carbon: #0f1011;
+  --color-obsidian: #161718;
+  --color-graphite: #23252a;
+  --color-smoke: #383b3f;
+
+  /* Texto */
+  --color-ash: #62666d;
+  --color-fog: #8a8f98;
+  --color-mist: #d0d6e0;
+  --color-bone: #e5e5e6;
+  --color-paper: #ffffff;
+
+  /* Acento propio */
+  --color-iris-300: #b9aeff;
+  --color-iris-400: #9b8cff;
+  --color-iris-500: #7b5cff;
+  --color-iris-600: #6544e6;
+  --color-iris-700: #5132c4;
+  --color-aqua: #22d3ee;
+
+  /* Estados */
+  --color-signal-success: #27a644;
+  --color-signal-warn: #f2b53c;
+  --color-signal-danger: #eb5757;
+  --color-signal-info: #02b8cc;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /*
+    Los pesos se quedan por debajo de 600 a propósito: la jerarquía la marcan el tamaño y el
+    color, no la negrita. Por eso `font-semibold` aquí vale 590 y no 600.
+  */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 510;
+  --font-weight-semibold: 590;
+
+  /* Escala tipográfica */
+  --text-display: 4.5rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.022em;
+  --text-display--font-weight: 510;
+
+  --text-hero: 3.5rem;
+  --text-hero--line-height: 1.02;
+  --text-hero--letter-spacing: -0.022em;
+  --text-hero--font-weight: 510;
+
+  --text-title: 2rem;
+  --text-title--line-height: 1.13;
+  --text-title--letter-spacing: -0.022em;
+
+  --text-subtitle: 1.5rem;
+  --text-subtitle--line-height: 1.33;
+  --text-subtitle--letter-spacing: -0.018em;
+
+  --text-base--letter-spacing: -0.011em;
+  --text-sm--letter-spacing: -0.010em;
+  --text-xs--letter-spacing: -0.006em;
+
+  /* Solo tres radios reales: botones, tarjetas y píldoras */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-hairline: inset 0 0 0 1px #23252a;
+  --shadow-lifted: 0 4px 32px 0 rgb(8 9 10 / 0.6);
+  --shadow-glow: 0 0 40px -8px rgb(123 92 255 / 0.45);
+
+  /* Animaciones */
+  --animate-aurora: aurora 18s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-rise: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pop: pop 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-in: slide-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pulse-ring: pulse-ring 2.2s ease-out infinite;
+}
+
+@keyframes aurora {
+  0%, 100% { transform: translate3d(-6%, -4%, 0) scale(1.05); opacity: 0.75; }
+  50% { transform: translate3d(6%, 5%, 0) scale(1.2); opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(123 92 255 / 0.5); }
+  70% { box-shadow: 0 0 0 10px rgb(123 92 255 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(123 92 255 / 0); }
+}
+
+/*
+  Bordes de 0.5px: separan superficies sin recurrir a sombras, que es lo que mantiene la
+  interfaz plana y nítida en vez de acolchada.
+*/
+@utility hairline {
+  border-width: 0.5px;
+  border-color: var(--color-graphite);
+}
+
+@utility hairline-strong {
+  border-width: 0.5px;
+  border-color: var(--color-smoke);
+}
+
+/* Barra de scroll discreta para las columnas del tablero y los paneles laterales. */
+@utility scrollbar-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-smoke) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-graphite);
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-smoke);
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-mist);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv01" on, "ss03" on, "zero" on;
+  }
+
+  h1, h2, h3, h4 {
+    color: var(--color-paper);
+    text-wrap: balance;
+  }
+
+  /* El foco por teclado se ve siempre; el de ratón no ensucia la interfaz. */
+  :focus-visible {
+    outline: 2px solid var(--color-iris-500);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: rgb(123 92 255 / 0.35);
+    color: var(--color-paper);
+  }
+}
+
+/*
+  Quien pide menos movimiento recibe la interfaz entera, solo que quieta. No se ocultan
+  elementos ni se cambian layouts: se neutralizan duraciones y animaciones.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

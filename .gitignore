@@ -1,0 +1,15 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+
+# Entorno
+.env
+*.local
+
+appsettings.Development.json

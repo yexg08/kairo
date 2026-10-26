@@ -1,0 +1,245 @@
+<div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+  @if (loading()) {
+    <div class="flex justify-center py-24 text-fog">
+      <app-spinner [size]="24" label="Cargando configuración" />
+    </div>
+  } @else if (workspace(); as ws) {
+    <header class="mb-8">
+      <a
+        [routerLink]="['/app/w', ws.id]"
+        class="mb-3 inline-flex items-center gap-1.5 text-sm text-fog transition-colors hover:text-paper"
+      >
+        <app-icon name="arrow-left" [size]="15" />
+        {{ ws.name }}
+      </a>
+      <h1 class="text-2xl font-medium">Configuración del espacio</h1>
+    </header>
+
+    <!-- ── Datos generales ── -->
+    <section class="mb-8 rounded-xl bg-carbon p-5 ring-1 ring-graphite">
+      <h2 class="mb-4 text-sm font-medium text-mist">General</h2>
+
+      <form class="space-y-4" [formGroup]="form" (ngSubmit)="saveGeneral()">
+        <div>
+          <label class="mb-1.5 block text-sm text-fog" for="ws-name">Nombre</label>
+          <input
+            id="ws-name"
+            type="text"
+            formControlName="name"
+            class="h-10 w-full rounded-md bg-obsidian px-3 text-sm text-paper ring-1 ring-graphite
+                   focus:outline-none focus:ring-2 focus:ring-iris-500"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1.5 block text-sm text-fog" for="ws-desc">Descripción</label>
+          <textarea
+            id="ws-desc"
+            rows="2"
+            formControlName="description"
+            class="w-full resize-none rounded-md bg-obsidian px-3 py-2 text-sm text-paper ring-1
+                   ring-graphite focus:outline-none focus:ring-2 focus:ring-iris-500"
+          ></textarea>
+        </div>
+
+        <div>
+          <span class="mb-2 block text-sm text-fog">Color</span>
+          <div class="flex flex-wrap gap-2">
+            @for (option of colors; track option) {
+              <button
+                type="button"
+                class="h-7 w-7 rounded-full transition-transform duration-150 hover:scale-110"
+                [class]="dotClass(option)"
+                [class.ring-2]="color() === option"
+                [class.ring-offset-2]="color() === option"
+                [class.ring-offset-carbon]="color() === option"
+                [class.ring-white]="color() === option"
+                [attr.aria-label]="'Color ' + option"
+                [attr.aria-pressed]="color() === option"
+                (click)="color.set(option)"
+              ></button>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button type="submit" appBtn="primary" [disabled]="savingGeneral() || form.invalid">
+            @if (savingGeneral()) {
+              <app-spinner [size]="15" label="Guardando" />
+            } @else {
+              Guardar cambios
+            }
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ── Invitar ── -->
+    @if (canManage()) {
+      <section class="mb-8 rounded-xl bg-carbon p-5 ring-1 ring-graphite">
+        <h2 class="mb-1 text-sm font-medium text-mist">Invitar gente</h2>
+        <p class="mb-4 text-xs text-ash">
+          La invitación le llega dentro de Kairo, en su campana de notificaciones. Solo entra al
+          espacio cuando la acepta.
+        </p>
+
+        <form class="flex flex-col gap-2 sm:flex-row" [formGroup]="inviteForm" (ngSubmit)="invite()">
+          <input
+            type="text"
+            formControlName="emailOrUsername"
+            class="h-10 flex-1 rounded-md bg-obsidian px-3 text-sm text-paper ring-1 ring-graphite
+                   placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-iris-500"
+            placeholder="correo o usuario"
+            aria-label="Correo o usuario a invitar"
+          />
+          <select
+            formControlName="role"
+            class="h-10 rounded-md bg-obsidian px-3 text-sm text-paper ring-1 ring-graphite
+                   focus:outline-none focus:ring-2 focus:ring-iris-500"
+            aria-label="Rol"
+          >
+            <option value="Member">Member</option>
+            <option value="Admin">Admin</option>
+          </select>
+          <button type="submit" appBtn="primary" [disabled]="inviting() || inviteForm.invalid">
+            @if (inviting()) {
+              <app-spinner [size]="15" label="Invitando" />
+            } @else {
+              <app-icon name="user-plus" [size]="16" />
+              Invitar
+            }
+          </button>
+        </form>
+
+        @if (pendingInvitations().length > 0) {
+          <div class="mt-5">
+            <p class="mb-2 text-xs uppercase tracking-wider text-ash">Invitaciones pendientes</p>
+            <ul class="divide-y divide-graphite">
+              @for (invitation of pendingInvitations(); track invitation.id) {
+                <li class="flex items-center gap-3 py-2.5">
+                  <app-avatar
+                    size="sm"
+                    [displayName]="invitation.invitedUserName"
+                    [color]="invitation.invitedUserAvatarColor"
+                  />
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm text-mist">{{ invitation.invitedUserName }}</p>
+                    <p class="truncate text-xs text-ash">{{ invitation.invitedUserEmail }}</p>
+                  </div>
+                  <span class="text-xs text-ash">{{ invitation.role }}</span>
+                  <button
+                    type="button"
+                    appBtn="icon"
+                    size="sm"
+                    aria-label="Cancelar invitación"
+                    (click)="revoke(invitation)"
+                  >
+                    <app-icon name="x-mark" [size]="15" />
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ── Miembros ── -->
+    <section class="mb-8 rounded-xl bg-carbon p-5 ring-1 ring-graphite">
+      <h2 class="mb-4 text-sm font-medium text-mist">
+        Miembros
+        <span class="text-ash">({{ members().length }})</span>
+      </h2>
+
+      <ul class="divide-y divide-graphite">
+        @for (member of members(); track member.userId) {
+          <li class="flex flex-wrap items-center gap-3 py-3">
+            <app-avatar
+              [displayName]="member.displayName"
+              [initials]="member.initials"
+              [color]="member.avatarColor"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm text-mist">
+                {{ member.displayName }}
+                @if (member.userId === currentUserId()) {
+                  <span class="text-ash">· tú</span>
+                }
+              </p>
+              <p class="truncate text-xs text-ash">{{ member.email }}</p>
+            </div>
+
+            @if (member.role === 'Owner') {
+              <span
+                class="flex items-center gap-1.5 rounded-full bg-obsidian px-2.5 py-1 text-[11px]
+                       text-fog ring-1 ring-graphite"
+              >
+                <app-icon name="shield-check" [size]="12" />
+                Owner
+              </span>
+            } @else if (canManage()) {
+              <select
+                class="h-8 rounded-md bg-obsidian px-2 text-xs text-paper ring-1 ring-graphite
+                       focus:outline-none focus:ring-2 focus:ring-iris-500"
+                [value]="member.role"
+                [attr.aria-label]="'Rol de ' + member.displayName"
+                (change)="changeRole(member, $event)"
+              >
+                <option value="Member">Member</option>
+                <option value="Admin">Admin</option>
+              </select>
+              <button
+                type="button"
+                appBtn="icon"
+                size="sm"
+                [attr.aria-label]="'Quitar a ' + member.displayName"
+                (click)="removeMember(member)"
+              >
+                <app-icon name="trash" [size]="15" />
+              </button>
+            } @else {
+              <span
+                class="rounded-full bg-obsidian px-2.5 py-1 text-[11px] text-fog ring-1 ring-graphite"
+              >
+                {{ member.role }}
+              </span>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+
+    <!-- ── Zona sensible ── -->
+    <section class="rounded-xl bg-carbon p-5 ring-1 ring-signal-danger/20">
+      <h2 class="mb-1 text-sm font-medium text-rose-300">Zona de riesgo</h2>
+
+      @if (isOwner()) {
+        <p class="mb-4 text-xs leading-relaxed text-ash">
+          Eliminar el espacio borra sus tableros, listas, tarjetas y comentarios. No se puede
+          deshacer.
+        </p>
+        <button type="button" appBtn="danger" (click)="deleteWorkspace()">
+          <app-icon name="trash" [size]="15" />
+          Eliminar espacio
+        </button>
+      } @else {
+        <p class="mb-4 text-xs leading-relaxed text-ash">
+          Si sales, dejarás de ver los tableros de este espacio y se te quitará de las tarjetas
+          que tengas asignadas.
+        </p>
+        <button type="button" appBtn="danger" (click)="leaveWorkspace()">
+          <app-icon name="arrow-right-start-on-rectangle" [size]="15" />
+          Salir del espacio
+        </button>
+      }
+    </section>
+  } @else {
+    <app-empty-state
+      icon="lock-closed"
+      title="No puedes configurar este espacio"
+      description="Necesitas ser Owner o Admin, o puede que ya no formes parte de él."
+    >
+      <a routerLink="/app" appBtn="subtle">Volver al inicio</a>
+    </app-empty-state>
+  }
+</div>

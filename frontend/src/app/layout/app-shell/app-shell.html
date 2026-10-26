@@ -1,0 +1,234 @@
+<div class="flex min-h-dvh bg-void">
+  <!-- Fondo del panel lateral en móvil. Solo existe cuando el cajón está abierto. -->
+  @if (sidebarOpen()) {
+    <div
+      class="fixed inset-0 z-30 bg-void/70 backdrop-blur-sm lg:hidden"
+      (click)="sidebarOpen.set(false)"
+      aria-hidden="true"
+    ></div>
+  }
+
+  <!-- ───────────────────────── Barra lateral ───────────────────────── -->
+  <aside
+    class="fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-graphite bg-carbon
+           transition-transform duration-200 ease-out lg:static lg:translate-x-0"
+    [class]="sidebarOpen() ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <div class="flex h-14 items-center justify-between px-4">
+      <a routerLink="/app" aria-label="Kairo, inicio"><app-logo [size]="26" /></a>
+      <button
+        type="button"
+        appBtn="icon"
+        size="sm"
+        class="lg:hidden"
+        aria-label="Cerrar menú"
+        (click)="sidebarOpen.set(false)"
+      >
+        <app-icon name="x-mark" [size]="16" />
+      </button>
+    </div>
+
+    <nav class="scrollbar-slim flex-1 overflow-y-auto px-3 pb-4">
+      <a
+        routerLink="/app"
+        routerLinkActive="bg-obsidian text-paper"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-fog transition-colors
+               hover:bg-obsidian hover:text-paper"
+        (click)="sidebarOpen.set(false)"
+      >
+        <app-icon name="squares-2x2" [size]="17" />
+        Inicio
+      </a>
+
+      <div class="mt-6 mb-2 flex items-center justify-between px-2.5">
+        <span class="text-[11px] uppercase tracking-wider text-ash">Espacios</span>
+        <button
+          type="button"
+          class="rounded p-0.5 text-ash transition-colors hover:text-paper"
+          aria-label="Nuevo espacio"
+          (click)="showWorkspaceDialog.set(true)"
+        >
+          <app-icon name="plus" [size]="14" />
+        </button>
+      </div>
+
+      @if (workspaces().length === 0) {
+        <p class="px-2.5 py-2 text-xs leading-relaxed text-ash">
+          Aún no tienes espacios. Crea uno para empezar a organizar tableros.
+        </p>
+      } @else {
+        <ul class="space-y-0.5">
+          @for (workspace of workspaces(); track workspace.id) {
+            <li class="group/ws flex items-center gap-1">
+              <a
+                [routerLink]="['/app/w', workspace.id]"
+                routerLinkActive="bg-obsidian text-paper"
+                class="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-fog
+                       transition-colors hover:bg-obsidian hover:text-paper"
+                (click)="sidebarOpen.set(false)"
+              >
+                <span class="h-2 w-2 shrink-0 rounded-full" [class]="dotClass(workspace.color)"></span>
+                <span class="truncate">{{ workspace.name }}</span>
+                <span class="ml-auto shrink-0 text-[11px] text-ash">{{ workspace.boardCount }}</span>
+              </a>
+
+              @if (workspace.myRole !== 'Member') {
+                <a
+                  [routerLink]="['/app/w', workspace.id, 'settings']"
+                  class="rounded-md p-1.5 text-ash opacity-0 transition-opacity hover:text-paper
+                         focus-visible:opacity-100 group-hover/ws:opacity-100"
+                  [attr.aria-label]="'Configuración de ' + workspace.name"
+                  (click)="sidebarOpen.set(false)"
+                >
+                  <app-icon name="cog-6-tooth" [size]="15" />
+                </a>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </nav>
+
+    <div class="border-t border-graphite p-3">
+      <button type="button" appBtn="subtle" class="w-full" (click)="showBoardDialog.set(true)">
+        <app-icon name="squares-plus" [size]="16" />
+        Nuevo tablero
+      </button>
+    </div>
+  </aside>
+
+  <!-- ───────────────────────── Contenido ───────────────────────── -->
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header
+      class="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-graphite bg-void/80 px-4
+             backdrop-blur-xl"
+    >
+      <button
+        type="button"
+        appBtn="icon"
+        size="sm"
+        class="lg:hidden"
+        aria-label="Abrir menú"
+        (click)="sidebarOpen.set(true)"
+      >
+        <app-icon name="bars-3" [size]="18" />
+      </button>
+
+      <button
+        type="button"
+        class="group flex h-9 flex-1 items-center gap-2.5 rounded-md bg-obsidian px-3 text-sm text-ash
+               ring-1 ring-graphite transition-colors hover:ring-smoke sm:max-w-xs"
+        (click)="showSearch.set(true)"
+      >
+        <app-icon name="magnifying-glass" [size]="16" />
+        <span class="flex-1 text-left">Buscar tarjetas…</span>
+        <kbd class="hidden rounded bg-carbon px-1.5 py-0.5 text-[11px] text-ash sm:block">
+          {{ shortcutHint }}
+        </kbd>
+      </button>
+
+      <div class="ml-auto flex items-center gap-1">
+        <!-- Estado del tiempo real: solo se hace notar cuando algo no va bien. -->
+        @if (realtimeStatus() !== 'online') {
+          <span
+            class="mr-1 hidden items-center gap-1.5 rounded-full bg-obsidian px-2.5 py-1 text-[11px]
+                   text-fog ring-1 ring-graphite sm:flex"
+            [attr.title]="realtimeHint()"
+          >
+            <span class="h-1.5 w-1.5 rounded-full" [class]="realtimeDotClass()"></span>
+            {{ realtimeLabel() }}
+          </span>
+        }
+
+        <app-notification-bell />
+
+        <div class="relative">
+          <button
+            type="button"
+            class="ml-1 rounded-full transition-transform duration-150 hover:scale-105"
+            [attr.aria-label]="'Cuenta de ' + (user()?.displayName ?? '')"
+            [attr.aria-expanded]="userMenuOpen()"
+            (click)="userMenuOpen.set(!userMenuOpen())"
+          >
+            @if (user(); as currentUser) {
+              <app-avatar
+                [displayName]="currentUser.displayName"
+                [initials]="currentUser.initials"
+                [color]="currentUser.avatarColor"
+              />
+            }
+          </button>
+
+          @if (userMenuOpen()) {
+            <div class="fixed inset-0 z-40" (click)="userMenuOpen.set(false)" aria-hidden="true"></div>
+
+            <div
+              class="animate-pop absolute right-0 z-50 mt-2 w-60 rounded-xl bg-carbon p-1.5
+                     shadow-lifted ring-1 ring-graphite"
+              role="menu"
+            >
+              @if (user(); as currentUser) {
+                <div class="border-b border-graphite px-3 py-2.5">
+                  <p class="truncate text-sm text-paper">{{ currentUser.displayName }}</p>
+                  <p class="truncate text-xs text-ash">{{ currentUser.email }}</p>
+                </div>
+              }
+
+              <button
+                type="button"
+                role="menuitem"
+                class="mt-1 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-fog
+                       transition-colors hover:bg-obsidian hover:text-paper"
+                (click)="openBoardDialog()"
+              >
+                <app-icon name="squares-plus" [size]="16" />
+                Nuevo tablero
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-fog
+                       transition-colors hover:bg-obsidian hover:text-paper"
+                (click)="openWorkspaceDialog()"
+              >
+                <app-icon name="user-group" [size]="16" />
+                Nuevo espacio
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-rose-300
+                       transition-colors hover:bg-signal-danger/10"
+                (click)="logout()"
+              >
+                <app-icon name="arrow-right-start-on-rectangle" [size]="16" />
+                Cerrar sesión
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <main class="min-w-0 flex-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<app-search-dialog [open]="showSearch()" (close)="showSearch.set(false)" />
+
+<app-create-workspace-dialog
+  [open]="showWorkspaceDialog()"
+  (close)="showWorkspaceDialog.set(false)"
+  (created)="onWorkspaceCreated($event)"
+/>
+
+<app-create-board-dialog
+  [open]="showBoardDialog()"
+  (close)="showBoardDialog.set(false)"
+  (created)="onBoardCreated($event)"
+/>

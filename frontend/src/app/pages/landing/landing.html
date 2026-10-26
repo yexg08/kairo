@@ -1,0 +1,377 @@
+<div class="relative min-h-dvh overflow-x-hidden bg-void">
+  <!-- Aurora de fondo: dos manchas desenfocadas que respiran. Van en un contenedor
+       aria-hidden y con pointer-events-none: son decoración, no contenido. -->
+  <div class="pointer-events-none absolute inset-x-0 top-0 h-[820px] overflow-hidden" aria-hidden="true">
+    <div
+      class="animate-aurora absolute -left-[10%] -top-[30%] h-[700px] w-[700px] rounded-full
+             bg-[radial-gradient(circle,rgba(123,92,255,0.42)_0%,transparent_62%)] blur-3xl"
+    ></div>
+    <div
+      class="animate-aurora absolute -right-[15%] -top-[18%] h-[640px] w-[640px] rounded-full
+             bg-[radial-gradient(circle,rgba(34,211,238,0.22)_0%,transparent_62%)] blur-3xl
+             [animation-delay:-7s]"
+    ></div>
+    <div
+      class="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_55%,#08090a_96%)]"
+    ></div>
+  </div>
+
+  <!-- ───────────────────────── Nav ───────────────────────── -->
+  <header class="relative z-20">
+    <nav class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+      <a routerLink="/" aria-label="Kairo, inicio"><app-logo /></a>
+
+      <div class="hidden items-center gap-8 md:flex">
+        <a href="#producto" class="text-sm text-fog transition-colors hover:text-paper">Producto</a>
+        <a href="#tiempo-real" class="text-sm text-fog transition-colors hover:text-paper">Tiempo real</a>
+        <a href="#equipos" class="text-sm text-fog transition-colors hover:text-paper">Equipos</a>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a routerLink="/login" appBtn="ghost" size="sm">Entrar</a>
+        <a routerLink="/register" appBtn="primary" size="sm">
+          Crear cuenta
+          <app-icon name="arrow-right" [size]="15" />
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ───────────────────────── Hero ───────────────────────── -->
+  <section class="relative z-10 mx-auto max-w-6xl px-5 pb-24 pt-16 sm:pt-24">
+    <div class="mx-auto max-w-3xl text-center">
+      <span
+        class="inline-flex items-center gap-2 rounded-full bg-obsidian/80 py-1 pl-1.5 pr-3 text-xs
+               text-mist ring-1 ring-graphite backdrop-blur"
+      >
+        <span class="rounded-full bg-iris-500/15 px-2 py-0.5 text-iris-300">Nuevo</span>
+        Colaboración en vivo sin recargar nada
+      </span>
+
+      <h1 class="mt-6 text-4xl sm:text-hero">
+        Tableros que se mueven
+        <span
+          class="bg-gradient-to-r from-iris-300 via-iris-400 to-aqua bg-clip-text text-transparent"
+        >
+          contigo
+        </span>
+      </h1>
+
+      <p class="mx-auto mt-5 max-w-xl text-base leading-relaxed text-fog sm:text-lg">
+        Organiza el trabajo de tu equipo en espacios, tableros y tarjetas. Cuando alguien mueve
+        algo, lo ves moverse: sin refrescar, sin preguntar, sin dudas sobre quién va por dónde.
+      </p>
+
+      <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a routerLink="/register" appBtn="primary" size="lg" class="w-full sm:w-auto">
+          Empezar gratis
+          <app-icon name="arrow-right" [size]="16" />
+        </a>
+        <a href="#tiempo-real" appBtn="subtle" size="lg" class="w-full sm:w-auto">
+          Ver cómo funciona
+        </a>
+      </div>
+
+      <p class="mt-4 text-xs text-ash">Sin tarjeta. Tu primer tablero viene listo para tocar.</p>
+    </div>
+
+    <!-- Maqueta del producto. Se inclina siguiendo al puntero para insinuar que eso se
+         agarra y se mueve, que es de lo que va la herramienta. -->
+    <div
+      class="mt-16 [transform-style:preserve-3d] transition-transform duration-300 ease-out"
+      [appTilt]="5"
+    >
+      <div
+        class="rounded-xl bg-carbon/70 p-2 shadow-lifted ring-1 ring-graphite backdrop-blur-xl
+               sm:p-3"
+      >
+        <div class="rounded-lg bg-[radial-gradient(120%_110%_at_15%_0%,#2a1d63_0%,#141033_40%,#0b0c10_82%)] p-4 sm:p-6">
+          <!-- Barra superior de la maqueta -->
+          <div class="mb-5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="h-2.5 w-2.5 rounded-full bg-smoke"></span>
+              <span class="text-sm font-medium text-paper">Rediseño del sitio</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              @for (viewer of demoViewers; track viewer.id) {
+                <app-avatar
+                  class="rounded-full ring-2 ring-carbon"
+                  size="sm"
+                  [displayName]="viewer.displayName"
+                  [initials]="viewer.initials"
+                  [color]="viewer.avatarColor"
+                />
+              }
+              <span class="ml-1.5 hidden items-center gap-1.5 text-xs text-fog sm:flex">
+                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-signal-success"></span>
+                3 viéndolo ahora
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            @for (column of demoBoard; track column.name; let columnIndex = $index) {
+              <div
+                class="rounded-lg bg-void/50 p-2.5 ring-1 ring-white/5"
+                [class]="columnIndex === 2 ? 'hidden sm:block' : ''"
+              >
+                <div class="mb-2.5 flex items-center justify-between px-1">
+                  <span class="text-xs font-medium text-mist">{{ column.name }}</span>
+                  <span class="text-[11px] text-ash">{{ column.cards.length }}</span>
+                </div>
+
+                <div class="space-y-2">
+                  @for (card of column.cards; track card.title) {
+                    <div
+                      class="relative rounded-md bg-carbon p-2.5 ring-1 ring-graphite"
+                      [class]="card.beingDragged ? 'card-held' : ''"
+                    >
+                      @if (card.label) {
+                        <span class="mb-2 block h-1.5 w-8 rounded-full" [class]="card.label"></span>
+                      }
+                      <p class="text-[13px] leading-snug text-mist">{{ card.title }}</p>
+                      @if (card.meta) {
+                        <div class="mt-2 flex items-center gap-2 text-[11px] text-ash">
+                          <app-icon name="list-bullet" [size]="12" />
+                          {{ card.meta }}
+                        </div>
+                      }
+
+                      <!-- Cursor con nombre, como en las herramientas multijugador: enseña que
+                           esa tarjeta la está agarrando otra persona ahora mismo. -->
+                      @if (card.beingDragged) {
+                        <span
+                          class="pointer-events-none absolute -bottom-2 -right-1 flex translate-x-1/3
+                                 items-center gap-1 rounded-full bg-iris-500 px-2 py-0.5 text-[10px]
+                                 font-medium text-white shadow-glow"
+                        >
+                          <svg viewBox="0 0 24 24" class="h-2.5 w-2.5" fill="currentColor" aria-hidden="true">
+                            <path d="M5 2.5 19.5 11 13 12.6 10.2 19 5 2.5Z" />
+                          </svg>
+                          Sofía
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Producto ───────────────────────── -->
+  <section id="producto" class="relative z-10 mx-auto max-w-6xl px-5 py-24">
+    <div class="max-w-2xl" [appReveal]="0">
+      <p class="text-sm text-iris-300">Producto</p>
+      <h2 class="mt-3 text-3xl sm:text-title">Todo lo que un tablero necesita, y nada más</h2>
+      <p class="mt-4 text-base leading-relaxed text-fog">
+        Kairo no intenta ser tu correo, tu wiki y tu CRM. Hace una cosa: mantener a un equipo de
+        acuerdo sobre qué está pasando ahora mismo.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (feature of features; track feature.title; let i = $index) {
+        <article
+          appSpotlight
+          class="group relative overflow-hidden rounded-xl bg-carbon p-5 ring-1 ring-graphite
+                 transition-colors duration-300 hover:ring-smoke"
+          [appReveal]="i * 60"
+        >
+          <!-- El foco que sigue al cursor: el degradado lee las variables que escribe la
+               directiva, así que moverse por la tarjeta no cuesta un ciclo de Angular. -->
+          <div
+            class="pointer-events-none absolute inset-0 opacity-[var(--spot-opacity,0)]
+                   transition-opacity duration-300
+                   bg-[radial-gradient(360px_circle_at_var(--spot-x,50%)_var(--spot-y,50%),rgba(123,92,255,0.13),transparent_70%)]"
+            aria-hidden="true"
+          ></div>
+
+          <div class="relative">
+            <span
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-obsidian text-iris-300
+                     ring-1 ring-graphite transition-transform duration-300 group-hover:-translate-y-0.5"
+            >
+              <app-icon [name]="feature.icon" [size]="18" />
+            </span>
+            <h3 class="mt-4 text-[15px] font-medium text-paper">{{ feature.title }}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-fog">{{ feature.description }}</p>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Tiempo real ───────────────────────── -->
+  <section id="tiempo-real" class="relative z-10 border-y border-graphite bg-carbon/40">
+    <div class="mx-auto grid max-w-6xl items-center gap-12 px-5 py-24 lg:grid-cols-2">
+      <div [appReveal]="0">
+        <p class="text-sm text-iris-300">Tiempo real</p>
+        <h2 class="mt-3 text-3xl sm:text-title">Nadie trabaja sobre una versión vieja</h2>
+        <p class="mt-4 text-base leading-relaxed text-fog">
+          El tablero está conectado por WebSocket. Si alguien arrastra una tarjeta, la escribe,
+          comenta o marca una subtarea, aparece en la pantalla de todos en el momento. No hay
+          botón de refrescar porque no hace falta.
+        </p>
+
+        <ul class="mt-8 space-y-4">
+          @for (item of realtimeBullets; track item.title) {
+            <li class="flex gap-3">
+              <span
+                class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md
+                       bg-iris-500/12 text-iris-300 ring-1 ring-iris-500/20"
+              >
+                <app-icon [name]="item.icon" [size]="14" />
+              </span>
+              <div>
+                <p class="text-sm font-medium text-mist">{{ item.title }}</p>
+                <p class="mt-0.5 text-sm text-ash">{{ item.description }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Feed de actividad que se va llenando solo: es la promesa de la sección, enseñada
+           en vez de contada. -->
+      <div class="rounded-xl bg-carbon p-5 ring-1 ring-graphite" [appReveal]="120">
+        <div class="mb-4 flex items-center justify-between">
+          <span class="text-sm font-medium text-paper">Actividad</span>
+          <span class="flex items-center gap-1.5 text-xs text-fog">
+            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-signal-success"></span>
+            en vivo
+          </span>
+        </div>
+
+        <ul class="space-y-3">
+          @for (entry of visibleActivity(); track entry.id) {
+            <li class="animate-slide-in flex items-start gap-3">
+              <app-avatar
+                size="sm"
+                [displayName]="entry.author"
+                [color]="entry.color"
+              />
+              <p class="text-sm leading-snug text-fog">
+                <span class="text-mist">{{ entry.author }}</span>
+                {{ entry.action }}
+                <span class="text-mist">{{ entry.target }}</span>
+              </p>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Equipos ───────────────────────── -->
+  <section id="equipos" class="relative z-10 mx-auto max-w-6xl px-5 py-24">
+    <div class="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+      <div [appReveal]="0">
+        <p class="text-sm text-iris-300">Equipos</p>
+        <h2 class="mt-3 text-3xl sm:text-title">Espacios, roles y quien tiene que estar</h2>
+        <p class="mt-4 text-base leading-relaxed text-fog">
+          Cada equipo tiene su espacio con sus tableros. Invitas por correo o usuario, repartes
+          rol de Owner, Admin o Member, y quien entra ve exactamente lo que le toca ver.
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-2">
+          @for (role of roleChips; track role.name) {
+            <span
+              class="inline-flex items-center gap-2 rounded-full bg-obsidian px-3 py-1.5 text-xs
+                     text-mist ring-1 ring-graphite"
+            >
+              <app-icon [name]="role.icon" [size]="13" class="text-iris-300" />
+              {{ role.name }}
+              <span class="text-ash">· {{ role.can }}</span>
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-carbon p-5 ring-1 ring-graphite" [appReveal]="120">
+        <p class="mb-4 text-sm font-medium text-paper">Miembros del espacio</p>
+        <ul class="divide-y divide-graphite">
+          @for (member of demoMembers; track member.name) {
+            <li class="flex items-center gap-3 py-3">
+              <app-avatar [displayName]="member.name" [color]="member.color" />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm text-mist">{{ member.name }}</p>
+                <p class="truncate text-xs text-ash">{{ member.email }}</p>
+              </div>
+              <span
+                class="rounded-full bg-obsidian px-2.5 py-1 text-[11px] text-fog ring-1 ring-graphite"
+              >
+                {{ member.role }}
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Marquesina ───────────────────────── -->
+  <section class="relative z-10 overflow-hidden border-y border-graphite py-6" aria-hidden="true">
+    <div class="marquee flex w-max gap-3">
+      <!-- Dos pasadas del mismo listado: la animación desplaza media anchura, así que la
+           segunda copia entra justo cuando la primera sale y el bucle no se ve. -->
+      @for (pass of marqueePasses; track pass) {
+        @for (tag of marqueeTags; track $index) {
+          <span
+            class="inline-flex shrink-0 items-center gap-2 rounded-full bg-obsidian px-3.5 py-1.5
+                   text-sm text-fog ring-1 ring-graphite"
+          >
+            <span class="h-1.5 w-1.5 rounded-full" [class]="tag.dot"></span>
+            {{ tag.text }}
+          </span>
+        }
+      }
+    </div>
+  </section>
+
+  <!-- ───────────────────────── CTA ───────────────────────── -->
+  <section class="relative z-10 mx-auto max-w-6xl px-5 py-24">
+    <div
+      class="relative overflow-hidden rounded-2xl bg-[radial-gradient(120%_140%_at_50%_0%,#3a2585_0%,#160f36_45%,#0b0c10_100%)]
+             px-6 py-16 text-center ring-1 ring-graphite sm:px-12"
+      [appReveal]="0"
+    >
+      <div
+        class="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full
+               bg-iris-500/25 blur-3xl"
+        aria-hidden="true"
+      ></div>
+
+      <div class="relative">
+        <h2 class="text-3xl sm:text-title">Tu equipo ya tiene tableros. Que estén al día.</h2>
+        <p class="mx-auto mt-4 max-w-lg text-base text-fog">
+          Crea tu cuenta y entra a un tablero de ejemplo que ya trae listas, etiquetas y tarjetas
+          para trastear.
+        </p>
+        <a routerLink="/register" appBtn="primary" size="lg" class="mt-8">
+          Crear mi cuenta
+          <app-icon name="arrow-right" [size]="16" />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Footer ───────────────────────── -->
+  <footer class="relative z-10 border-t border-graphite">
+    <div
+      class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row"
+    >
+      <app-logo [size]="24" />
+      <p class="text-xs text-ash">
+        Proyecto de portafolio · Angular, .NET y SignalR
+      </p>
+      <div class="flex items-center gap-4 text-xs text-ash">
+        <a routerLink="/login" class="transition-colors hover:text-mist">Entrar</a>
+        <a routerLink="/register" class="transition-colors hover:text-mist">Crear cuenta</a>
+      </div>
+    </div>
+  </footer>
+</div>
