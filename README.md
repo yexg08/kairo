@@ -7,6 +7,14 @@ con colaboración en tiempo real.
 - **Frontend**: Angular 22 standalone y zoneless + signals, Tailwind v4, Heroicons, Angular CDK
   drag & drop.
 
+## Capturas
+
+![Inicio de sesión](docs/kairo-login.png)
+
+![Panel de inicio](docs/kairo-inicio.png)
+
+![Tablero con listas y tarjetas](docs/kairo-tablero.png)
+
 ---
 
 ## Puesta en marcha
